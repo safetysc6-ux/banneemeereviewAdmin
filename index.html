@@ -6,7 +6,6 @@
     <title>Super Admin Panel - จัดการสินค้า</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
     <style>
         /* --- Dark Theme & Layout --- */
         :root { --bg-main: #121212; --bg-secondary: #1e1e1e; --text: #ffffff; --orange: #ff5722; --danger: #e74c3c; --success: #2ecc71; }
@@ -55,7 +54,10 @@
             <p class="form-title-mode" id="formModeTitle">โหมด: เพิ่มสินค้าใหม่</p>
             
             <form id="productForm">
-                <input type="hidden" id="action" name="action" value="add"> <input type="hidden" id="productId" name="id" value=""> <div style="border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 15px;">
+                <input type="hidden" id="action" name="action" value="add">
+                <input type="hidden" id="productId" name="id" value="">
+
+                <div style="border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 15px;">
                      <label style="color: var(--orange);"><i class="fas fa-lock"></i> รหัสผ่าน Admin *</label>
                      <input type="password" id="password" name="password" placeholder="ใส่รหัสผ่านเพื่อยืนยันการกระทำ" required>
                 </div>
@@ -94,23 +96,15 @@
         <div class="list-container">
             <h2>รายการสินค้าปัจจุบัน</h2>
             <table id="productTable">
-                <thead>
-                    <tr>
-                        <th>รูป</th>
-                        <th>ชื่อสินค้า</th>
-                        <th>หมวดหมู่</th>
-                        <th>จัดการ</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                    </tbody>
+                <thead><tr><th>รูป</th><th>ชื่อสินค้า</th><th>หมวดหมู่</th><th>จัดการ</th></tr></thead>
+                <tbody id="tableBody"></tbody>
             </table>
         </div>
     </div>
 
     <script>
         // ======================================================
-        // ⚠️⚠️⚠️ วาง URL Web App (อันเดิม) ของคุณที่นี่ ⚠️⚠️⚠️
+        // ⚠️⚠️⚠️ วาง URL ใหม่ที่คุณเพิ่ง Deploy ได้มาตรงนี้ ⚠️⚠️⚠️
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzoEFcaMRt27hTwd6_3I46L-QBrNBGAuB2l8wNBw2HI3zuADkLal9l3LNS_Hl_1DGsnCA/exec";
         // ======================================================
 
@@ -121,31 +115,33 @@
         const submitBtn = document.getElementById('submitBtn');
         const cancelBtn = document.getElementById('cancelBtn');
         const formModeTitle = document.getElementById('formModeTitle');
-        
-        let allProductsCache = []; // เก็บข้อมูลสินค้าไว้ในตัวแปร
+        let allProductsCache = [];
 
-        // --- โหลดข้อมูลสินค้าเมื่อเปิดหน้าเว็บ ---
         window.onload = loadProducts;
 
         function loadProducts() {
             loadingOverlay.style.display = 'flex';
-            fetch(GOOGLE_SCRIPT_URL) // เรียก GET เพื่อดึงข้อมูล
+            // GET request ไม่ต้องมี body และ method
+            fetch(GOOGLE_SCRIPT_URL) 
                 .then(res => res.json())
                 .then(data => {
                     if (data.status === "success") {
-                        allProductsCache = data.data; // เก็บข้อมูลดิบไว้ (เป็น Array ของ Array)
-                        renderTable(allProductsCache.slice().reverse()); // แสดงผล (กลับด้านเอาของใหม่ขึ้นก่อน)
+                        allProductsCache = data.data;
+                        renderTable(allProductsCache.slice().reverse());
+                    } else {
+                        statusMsg.innerHTML = `<span class="error-msg">❌ โหลดข้อมูลไม่สำเร็จ: ${data.message}</span>`;
                     }
                 })
-                .catch(err => console.error(err))
+                .catch(err => {
+                    console.error(err);
+                    statusMsg.innerHTML = `<span class="error-msg">❌ เชื่อมต่อล้มเหลว (ตรวจสอบ URL หรือการ Deploy)</span>`;
+                })
                 .finally(() => loadingOverlay.style.display = 'none');
         }
 
-        // --- แสดงผลตาราง ---
         function renderTable(products) {
             tableBody.innerHTML = '';
             products.forEach(row => {
-                // row[0]=ID, row[1]=Name, row[2]=Link, row[3]=Image, row[4]=Category
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><img src="${row[3]}" class="product-img-mini" onerror="this.src='https://via.placeholder.com/50'"></td>
@@ -160,34 +156,25 @@
             });
         }
 
-        // --- เริ่มโหมดแก้ไข (เมื่อกดปุ่ม Edit ในตาราง) ---
         function startEditMode(id) {
-            // หาข้อมูลสินค้าจาก Cache โดยใช้ ID
             const productData = allProductsCache.find(row => row[0].toString() === id.toString());
             if (!productData) return;
-
-            // กรอกข้อมูลลงในฟอร์ม
-            document.getElementById('action').value = 'edit'; // เปลี่ยน action เป็น edit
-            document.getElementById('productId').value = productData[0]; // ใส่ ID
+            document.getElementById('action').value = 'edit';
+            document.getElementById('productId').value = productData[0];
             document.getElementById('name').value = productData[1];
             document.getElementById('link').value = productData[2];
             document.getElementById('image').value = productData[3];
             document.getElementById('category').value = productData[4];
             document.getElementById('price').value = productData[5];
             document.getElementById('description').value = productData[7];
-
-            // ปรับหน้าตาปุ่ม
             submitBtn.innerHTML = '<i class="fas fa-save"></i> บันทึกการแก้ไข';
             submitBtn.classList.add('edit-mode');
             cancelBtn.style.display = 'inline-block';
             formModeTitle.innerText = `โหมด: กำลังแก้ไข "${productData[1]}"`;
-            
-            // เลื่อนหน้าจอไปที่ฟอร์ม (สำหรับมือถือ)
             document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth' });
             statusMsg.innerText = '';
         }
 
-        // --- ยกเลิกโหมดแก้ไข / รีเซ็ตฟอร์ม ---
         function resetForm() {
             form.reset();
             document.getElementById('action').value = 'add';
@@ -196,11 +183,8 @@
             submitBtn.classList.remove('edit-mode');
             cancelBtn.style.display = 'none';
             formModeTitle.innerText = 'โหมด: เพิ่มสินค้าใหม่';
-            // ไม่ลบรหัสผ่าน เพื่อความสะดวก
-             // document.getElementById('password').value = ''; 
         }
 
-        // --- ยืนยันการลบ ---
         function confirmDelete(id, name) {
             const password = prompt(`คุณต้องการลบสินค้า "${name}" ใช่หรือไม่?\n\nกรุณาใส่รหัสผ่าน Admin เพื่อยืนยันการลบ:`);
             if (password) {
@@ -208,36 +192,38 @@
             }
         }
 
-        // --- จัดการการส่งฟอร์ม (Add / Edit) ---
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             const formData = new FormData(form);
-            // แปลง FormData เป็น Object
             const data = {};
             formData.forEach((value, key) => data[key] = value);
             sendDataToBackend(data);
         });
 
-        // --- ฟังก์ชันกลางสำหรับส่งข้อมูลไปหลังบ้าน ---
+        // --- ฟังก์ชันส่งข้อมูลไปหลังบ้าน (แก้ไขใหม่) ---
         function sendDataToBackend(dataObj) {
             loadingOverlay.style.display = 'flex';
             statusMsg.innerText = '';
 
-            // แปลง Object เป็น FormData เพื่อส่ง
-            const formDataToSend = new FormData();
+            // ใช้ URLSearchParams แทน FormData สำหรับ Google Apps Script
+            const params = new URLSearchParams();
             for (const key in dataObj) {
-                formDataToSend.append(key, dataObj[key]);
+                params.append(key, dataObj[key]);
             }
 
-            fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: formDataToSend })
+            fetch(GOOGLE_SCRIPT_URL, { 
+                method: 'POST', 
+                body: params, // ส่งเป็น URLSearchParams
+                redirect: 'follow' // *** สำคัญมาก: ต้องมีบรรทัดนี้เพื่อให้ตาม Google ไป ***
+            })
             .then(res => res.json())
             .then(data => {
                 if (data.status === "success") {
                     statusMsg.innerHTML = `<span class="success-msg">✅ ${data.message}</span>`;
                     if (data.action === 'add' || data.action === 'edit') {
-                        resetForm(); // รีเซ็ตฟอร์มถ้าเพิ่มหรือแก้เสร็จ
+                        resetForm();
                     }
-                    loadProducts(); // โหลดตารางใหม่เสมอ
+                    loadProducts(); // โหลดตารางใหม่
                 } else {
                     statusMsg.innerHTML = `<span class="error-msg">❌ ${data.message}</span>`;
                 }
@@ -248,7 +234,6 @@
             })
             .finally(() => loadingOverlay.style.display = 'none');
         }
-
     </script>
 </body>
 </html>
