@@ -3,163 +3,252 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - เพิ่มสินค้าใหม่</title>
+    <title>Super Admin Panel - จัดการสินค้า</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
     <style>
-        /* ธีมสี Dark Mode */
-        :root {
-            --bg-main: #121212; --bg-secondary: #1e1e1e;
-            --text-primary: #ffffff; --text-secondary: #b0b0b0;
-            --brand-orange: #ff5722;
-        }
+        /* --- Dark Theme & Layout --- */
+        :root { --bg-main: #121212; --bg-secondary: #1e1e1e; --text: #ffffff; --orange: #ff5722; --danger: #e74c3c; --success: #2ecc71; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Kanit', sans-serif; background-color: var(--bg-main); color: var(--text-primary);
-            display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px;
-        }
-        .admin-container {
-            background: var(--bg-secondary); padding: 30px; border-radius: 12px;
-            width: 100%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        h2 { text-align: center; margin-bottom: 25px; color: var(--brand-orange); }
+        body { font-family: 'Kanit', sans-serif; background: var(--bg-main); color: var(--text); padding: 20px; }
+        .main-layout { display: flex; gap: 20px; max-width: 1200px; margin: 0 auto; align-items: flex-start;}
         
-        /* Form Styles */
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 500; }
-        input, select, textarea {
-            width: 100%; padding: 12px; border-radius: 8px;
-            border: 1px solid #333; background: var(--bg-main); color: var(--text-primary);
-            font-family: 'Kanit', sans-serif; font-size: 1rem; outline: none;
-        }
-        input:focus, select:focus, textarea:focus { border-color: var(--brand-orange); }
-        textarea { resize: vertical; height: 100px; }
-
-        .btn-submit {
-            width: 100%; padding: 15px; border: none; border-radius: 30px;
-            background: var(--brand-orange); color: white; font-size: 1.1rem; font-weight: 600;
-            cursor: pointer; transition: background 0.2s;
-        }
+        /* --- Form Section (Left) --- */
+        .form-container { background: var(--bg-secondary); padding: 30px; border-radius: 12px; width: 400px; flex-shrink: 0; position: sticky; top: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);}
+        h2 { text-align: center; margin-bottom: 20px; color: var(--orange); font-size: 1.5rem; }
+        .form-title-mode { font-size: 1rem; color: #888; text-align: center; margin-top: -15px; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-size: 0.9rem;}
+        input, select, textarea { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #333; background: var(--bg-main); color: var(--text); font-family: 'Kanit'; outline: none; }
+        input:focus, select:focus, textarea:focus { border-color: var(--orange); }
+        textarea { height: 80px; resize: vertical; }
+        .btn-submit { width: 100%; padding: 12px; border: none; border-radius: 30px; background: var(--orange); color: white; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .btn-submit:hover { background: #e64a19; }
-        .btn-submit:disabled { background: #555; cursor: not-allowed; }
+        .btn-submit.edit-mode { background: var(--success); } /* สีเขียวเมื่ออยู่ในโหมดแก้ไข */
+        .btn-cancel { width: 100%; padding: 10px; margin-top: 10px; background: #555; color: white; border: none; border-radius: 30px; cursor: pointer; display: none; } /* ซ่อนไว้ก่อน */
+        
+        /* --- List Section (Right) --- */
+        .list-container { flex-grow: 1; background: var(--bg-secondary); padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); overflow-x: auto;}
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #333; }
+        th { color: var(--orange); }
+        .product-img-mini { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
+        .action-btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px; font-family: 'Kanit'; }
+        .btn-edit { background: var(--success); color: white; }
+        .btn-delete { background: var(--danger); color: white; }
+        
+        /* Status & Loading */
+        #statusMessage { text-align: center; margin-top: 15px; min-height: 1.4em; }
+        .success-msg { color: var(--success); } .error-msg { color: var(--danger); }
+        .loading-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 999; color: white; font-size: 1.5rem;}
 
-        /* Status Messages */
-        #statusMessage { text-align: center; margin-top: 20px; font-weight: 500; min-height: 1.6em;}
-        .success { color: #2ecc71; }
-        .error { color: #e74c3c; }
+        @media (max-width: 900px) { .main-layout { flex-direction: column; } .form-container { width: 100%; position: static; } }
     </style>
 </head>
 <body>
 
-    <div class="admin-container">
-        <h2><i class="fas fa-database"></i> เพิ่มสินค้าใหม่</h2>
-        
-        <form id="addProductForm">
+    <div class="loading-overlay" id="loadingOverlay"><i class="fas fa-spinner fa-spin"></i>&nbsp; กำลังประมวลผล...</div>
+
+    <div class="main-layout">
+        <div class="form-container">
+            <h2><i class="fas fa-cogs"></i> จัดการสินค้า</h2>
+            <p class="form-title-mode" id="formModeTitle">โหมด: เพิ่มสินค้าใหม่</p>
             
-            <div class="form-group" style="border-bottom: 1px solid #333; padding-bottom: 20px;">
-                 <label for="password" style="color: var(--brand-orange);"><i class="fas fa-lock"></i> รหัสผ่าน Admin (จำเป็น)</label>
-                 <input type="password" id="password" name="password" placeholder="ใส่รหัสผ่านที่คุณตั้งใน Apps Script" required>
-            </div>
+            <form id="productForm">
+                <input type="hidden" id="action" name="action" value="add"> <input type="hidden" id="productId" name="id" value=""> <div style="border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 15px;">
+                     <label style="color: var(--orange);"><i class="fas fa-lock"></i> รหัสผ่าน Admin *</label>
+                     <input type="password" id="password" name="password" placeholder="ใส่รหัสผ่านเพื่อยืนยันการกระทำ" required>
+                </div>
 
-            <div class="form-group">
-                <label for="name">ชื่อสินค้า (Name) *</label>
-                <input type="text" id="name" name="name" required placeholder="เช่น เครื่องดูดฝุ่นไร้สาย">
-            </div>
-
-            <div class="form-group">
-                <label for="category">หมวดหมู่ (Category) *</label>
+                <label>ชื่อสินค้า *</label>
+                <input type="text" id="name" name="name" required>
+                
+                <label>หมวดหมู่ *</label>
                 <select id="category" name="category" required>
-                    <option value="">-- เลือกหมวดหมู่ --</option>
+                    <option value="">-- เลือก --</option>
                     <option value="ของใช้ในครัว">ของใช้ในครัว</option>
                     <option value="อุปกรณ์ทำความสะอาด">อุปกรณ์ทำความสะอาด</option>
                     <option value="ของแต่งบ้าน">ของแต่งบ้าน</option>
                     <option value="Gadget">Gadget</option>
                     <option value="อื่นๆ">อื่นๆ</option>
                 </select>
-            </div>
 
-            <div class="form-group">
-                <label for="price">ราคา (Price)</label>
-                <input type="number" id="price" name="price" placeholder="เช่น 15900 (ใส่แค่ตัวเลข)">
-            </div>
+                <label>ราคา</label>
+                <input type="number" id="price" name="price">
 
-            <div class="form-group">
-                <label for="link">ลิงก์ Affiliate/ร้านค้า (Link) *</label>
-                <input type="url" id="link" name="link" required placeholder="https://shopee.co.th/...">
-            </div>
+                <label>ลิงก์ร้านค้า *</label>
+                <input type="url" id="link" name="link" required>
 
-            <div class="form-group">
-                <label for="image">ลิงก์รูปภาพ (Image URL) *</label>
-                <input type="url" id="image" name="image" required placeholder="https://.../image.jpg">
-            </div>
+                <label>ลิงก์รูปภาพ *</label>
+                <input type="url" id="image" name="image" required>
 
-            <div class="form-group">
-                <label for="description">รายละเอียดเพิ่มเติม (Description)</label>
-                <textarea id="description" name="description" placeholder="ใส่รายละเอียดสินค้า (รองรับการขึ้นบรรทัดใหม่)"></textarea>
-            </div>
+                <label>รายละเอียด</label>
+                <textarea id="description" name="description"></textarea>
 
-            <button type="submit" class="btn-submit" id="submitBtn">
-                <i class="fas fa-save"></i> บันทึกข้อมูล
-            </button>
+                <button type="submit" class="btn-submit" id="submitBtn"><i class="fas fa-plus"></i> เพิ่มสินค้า</button>
+                <button type="button" class="btn-cancel" id="cancelBtn" onclick="resetForm()">ยกเลิกการแก้ไข</button>
+            </form>
+            <div id="statusMessage"></div>
+        </div>
 
-        </form>
-
-        <div id="statusMessage"></div>
+        <div class="list-container">
+            <h2>รายการสินค้าปัจจุบัน</h2>
+            <table id="productTable">
+                <thead>
+                    <tr>
+                        <th>รูป</th>
+                        <th>ชื่อสินค้า</th>
+                        <th>หมวดหมู่</th>
+                        <th>จัดการ</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    </tbody>
+            </table>
+        </div>
     </div>
 
     <script>
         // ======================================================
-        // ⚠️⚠️⚠️ วาง URL ของเว็บแอป ที่คุณคัดลอกมาตรงนี้ ⚠️⚠️⚠️
+        // ⚠️⚠️⚠️ วาง URL Web App (อันเดิม) ของคุณที่นี่ ⚠️⚠️⚠️
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzoEFcaMRt27hTwd6_3I46L-QBrNBGAuB2l8wNBw2HI3zuADkLal9l3LNS_Hl_1DGsnCA/exec";
         // ======================================================
 
-        const form = document.getElementById('addProductForm');
+        const form = document.getElementById('productForm');
         const statusMsg = document.getElementById('statusMessage');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const tableBody = document.getElementById('tableBody');
         const submitBtn = document.getElementById('submitBtn');
-        const originalBtnText = submitBtn.innerHTML;
+        const cancelBtn = document.getElementById('cancelBtn');
+        const formModeTitle = document.getElementById('formModeTitle');
+        
+        let allProductsCache = []; // เก็บข้อมูลสินค้าไว้ในตัวแปร
 
-        form.addEventListener('submit', function(e) {
-            e.preventDefault(); // ป้องกันการรีเฟรชหน้าจอ
+        // --- โหลดข้อมูลสินค้าเมื่อเปิดหน้าเว็บ ---
+        window.onload = loadProducts;
 
-            // เปลี่ยนปุ่มเป็นสถานะกำลังโหลด
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> กำลังบันทึก...';
+        function loadProducts() {
+            loadingOverlay.style.display = 'flex';
+            fetch(GOOGLE_SCRIPT_URL) // เรียก GET เพื่อดึงข้อมูล
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === "success") {
+                        allProductsCache = data.data; // เก็บข้อมูลดิบไว้ (เป็น Array ของ Array)
+                        renderTable(allProductsCache.slice().reverse()); // แสดงผล (กลับด้านเอาของใหม่ขึ้นก่อน)
+                    }
+                })
+                .catch(err => console.error(err))
+                .finally(() => loadingOverlay.style.display = 'none');
+        }
+
+        // --- แสดงผลตาราง ---
+        function renderTable(products) {
+            tableBody.innerHTML = '';
+            products.forEach(row => {
+                // row[0]=ID, row[1]=Name, row[2]=Link, row[3]=Image, row[4]=Category
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><img src="${row[3]}" class="product-img-mini" onerror="this.src='https://via.placeholder.com/50'"></td>
+                    <td>${row[1]}</td>
+                    <td>${row[4]}</td>
+                    <td>
+                        <button class="action-btn btn-edit" onclick="startEditMode('${row[0]}')"><i class="fas fa-edit"></i></button>
+                        <button class="action-btn btn-delete" onclick="confirmDelete('${row[0]}', '${row[1]}')"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        // --- เริ่มโหมดแก้ไข (เมื่อกดปุ่ม Edit ในตาราง) ---
+        function startEditMode(id) {
+            // หาข้อมูลสินค้าจาก Cache โดยใช้ ID
+            const productData = allProductsCache.find(row => row[0].toString() === id.toString());
+            if (!productData) return;
+
+            // กรอกข้อมูลลงในฟอร์ม
+            document.getElementById('action').value = 'edit'; // เปลี่ยน action เป็น edit
+            document.getElementById('productId').value = productData[0]; // ใส่ ID
+            document.getElementById('name').value = productData[1];
+            document.getElementById('link').value = productData[2];
+            document.getElementById('image').value = productData[3];
+            document.getElementById('category').value = productData[4];
+            document.getElementById('price').value = productData[5];
+            document.getElementById('description').value = productData[7];
+
+            // ปรับหน้าตาปุ่ม
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> บันทึกการแก้ไข';
+            submitBtn.classList.add('edit-mode');
+            cancelBtn.style.display = 'inline-block';
+            formModeTitle.innerText = `โหมด: กำลังแก้ไข "${productData[1]}"`;
+            
+            // เลื่อนหน้าจอไปที่ฟอร์ม (สำหรับมือถือ)
+            document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth' });
             statusMsg.innerText = '';
-            statusMsg.className = '';
+        }
 
-            // ดึงข้อมูลจากฟอร์ม
+        // --- ยกเลิกโหมดแก้ไข / รีเซ็ตฟอร์ม ---
+        function resetForm() {
+            form.reset();
+            document.getElementById('action').value = 'add';
+            document.getElementById('productId').value = '';
+            submitBtn.innerHTML = '<i class="fas fa-plus"></i> เพิ่มสินค้า';
+            submitBtn.classList.remove('edit-mode');
+            cancelBtn.style.display = 'none';
+            formModeTitle.innerText = 'โหมด: เพิ่มสินค้าใหม่';
+            // ไม่ลบรหัสผ่าน เพื่อความสะดวก
+             // document.getElementById('password').value = ''; 
+        }
+
+        // --- ยืนยันการลบ ---
+        function confirmDelete(id, name) {
+            const password = prompt(`คุณต้องการลบสินค้า "${name}" ใช่หรือไม่?\n\nกรุณาใส่รหัสผ่าน Admin เพื่อยืนยันการลบ:`);
+            if (password) {
+                sendDataToBackend({ action: 'delete', id: id, password: password });
+            }
+        }
+
+        // --- จัดการการส่งฟอร์ม (Add / Edit) ---
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
             const formData = new FormData(form);
+            // แปลง FormData เป็น Object
+            const data = {};
+            formData.forEach((value, key) => data[key] = value);
+            sendDataToBackend(data);
+        });
 
-            // ส่งข้อมูลไปยัง Google Apps Script ด้วย fetch
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.text())
+        // --- ฟังก์ชันกลางสำหรับส่งข้อมูลไปหลังบ้าน ---
+        function sendDataToBackend(dataObj) {
+            loadingOverlay.style.display = 'flex';
+            statusMsg.innerText = '';
+
+            // แปลง Object เป็น FormData เพื่อส่ง
+            const formDataToSend = new FormData();
+            for (const key in dataObj) {
+                formDataToSend.append(key, dataObj[key]);
+            }
+
+            fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: formDataToSend })
+            .then(res => res.json())
             .then(data => {
-                // เมื่อได้รับคำตอบกลับมา
-                if (data === "Success") {
-                    statusMsg.innerText = "✅ บันทึกข้อมูลสำเร็จ!";
-                    statusMsg.className = "success";
-                    form.reset(); // เคลียร์ฟอร์ม
+                if (data.status === "success") {
+                    statusMsg.innerHTML = `<span class="success-msg">✅ ${data.message}</span>`;
+                    if (data.action === 'add' || data.action === 'edit') {
+                        resetForm(); // รีเซ็ตฟอร์มถ้าเพิ่มหรือแก้เสร็จ
+                    }
+                    loadProducts(); // โหลดตารางใหม่เสมอ
                 } else {
-                    statusMsg.innerText = "❌ เกิดข้อผิดพลาด: " + data;
-                    statusMsg.className = "error";
+                    statusMsg.innerHTML = `<span class="error-msg">❌ ${data.message}</span>`;
                 }
             })
-            .catch(error => {
-                statusMsg.innerText = "❌ เชื่อมต่อไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต";
-                statusMsg.className = "error";
-                console.error('Error!', error.message);
+            .catch(err => {
+                statusMsg.innerHTML = `<span class="error-msg">❌ เชื่อมต่อล้มเหลว (CORS หรือ Deploy ผิด)</span>`;
+                console.error(err);
             })
-            .finally(() => {
-                // คืนค่าปุ่มกลับสู่สภาพเดิม
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalBtnText;
-            });
-        });
-    </script>
+            .finally(() => loadingOverlay.style.display = 'none');
+        }
 
+    </script>
 </body>
 </html>
