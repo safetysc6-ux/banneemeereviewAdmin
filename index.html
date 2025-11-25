@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - เพิ่มสินค้าใหม่</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        /* ธีมสี Dark Mode */
+        :root {
+            --bg-main: #121212; --bg-secondary: #1e1e1e;
+            --text-primary: #ffffff; --text-secondary: #b0b0b0;
+            --brand-orange: #ff5722;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Kanit', sans-serif; background-color: var(--bg-main); color: var(--text-primary);
+            display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px;
+        }
+        .admin-container {
+            background: var(--bg-secondary); padding: 30px; border-radius: 12px;
+            width: 100%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        h2 { text-align: center; margin-bottom: 25px; color: var(--brand-orange); }
+        
+        /* Form Styles */
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 500; }
+        input, select, textarea {
+            width: 100%; padding: 12px; border-radius: 8px;
+            border: 1px solid #333; background: var(--bg-main); color: var(--text-primary);
+            font-family: 'Kanit', sans-serif; font-size: 1rem; outline: none;
+        }
+        input:focus, select:focus, textarea:focus { border-color: var(--brand-orange); }
+        textarea { resize: vertical; height: 100px; }
+
+        .btn-submit {
+            width: 100%; padding: 15px; border: none; border-radius: 30px;
+            background: var(--brand-orange); color: white; font-size: 1.1rem; font-weight: 600;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .btn-submit:hover { background: #e64a19; }
+        .btn-submit:disabled { background: #555; cursor: not-allowed; }
+
+        /* Status Messages */
+        #statusMessage { text-align: center; margin-top: 20px; font-weight: 500; min-height: 1.6em;}
+        .success { color: #2ecc71; }
+        .error { color: #e74c3c; }
+    </style>
+</head>
+<body>
+
+    <div class="admin-container">
+        <h2><i class="fas fa-database"></i> เพิ่มสินค้าใหม่</h2>
+        
+        <form id="addProductForm">
+            
+            <div class="form-group" style="border-bottom: 1px solid #333; padding-bottom: 20px;">
+                 <label for="password" style="color: var(--brand-orange);"><i class="fas fa-lock"></i> รหัสผ่าน Admin (จำเป็น)</label>
+                 <input type="password" id="password" name="password" placeholder="ใส่รหัสผ่านที่คุณตั้งใน Apps Script" required>
+            </div>
+
+            <div class="form-group">
+                <label for="name">ชื่อสินค้า (Name) *</label>
+                <input type="text" id="name" name="name" required placeholder="เช่น เครื่องดูดฝุ่นไร้สาย">
+            </div>
+
+            <div class="form-group">
+                <label for="category">หมวดหมู่ (Category) *</label>
+                <select id="category" name="category" required>
+                    <option value="">-- เลือกหมวดหมู่ --</option>
+                    <option value="ของใช้ในครัว">ของใช้ในครัว</option>
+                    <option value="อุปกรณ์ทำความสะอาด">อุปกรณ์ทำความสะอาด</option>
+                    <option value="ของแต่งบ้าน">ของแต่งบ้าน</option>
+                    <option value="Gadget">Gadget</option>
+                    <option value="อื่นๆ">อื่นๆ</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="price">ราคา (Price)</label>
+                <input type="number" id="price" name="price" placeholder="เช่น 15900 (ใส่แค่ตัวเลข)">
+            </div>
+
+            <div class="form-group">
+                <label for="link">ลิงก์ Affiliate/ร้านค้า (Link) *</label>
+                <input type="url" id="link" name="link" required placeholder="https://shopee.co.th/...">
+            </div>
+
+            <div class="form-group">
+                <label for="image">ลิงก์รูปภาพ (Image URL) *</label>
+                <input type="url" id="image" name="image" required placeholder="https://.../image.jpg">
+            </div>
+
+            <div class="form-group">
+                <label for="description">รายละเอียดเพิ่มเติม (Description)</label>
+                <textarea id="description" name="description" placeholder="ใส่รายละเอียดสินค้า (รองรับการขึ้นบรรทัดใหม่)"></textarea>
+            </div>
+
+            <button type="submit" class="btn-submit" id="submitBtn">
+                <i class="fas fa-save"></i> บันทึกข้อมูล
+            </button>
+
+        </form>
+
+        <div id="statusMessage"></div>
+    </div>
+
+    <script>
+        // ======================================================
+        // ⚠️⚠️⚠️ วาง URL ของเว็บแอป ที่คุณคัดลอกมาตรงนี้ ⚠️⚠️⚠️
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzoEFcaMRt27hTwd6_3I46L-QBrNBGAuB2l8wNBw2HI3zuADkLal9l3LNS_Hl_1DGsnCA/exec";
+        // ======================================================
+
+        const form = document.getElementById('addProductForm');
+        const statusMsg = document.getElementById('statusMessage');
+        const submitBtn = document.getElementById('submitBtn');
+        const originalBtnText = submitBtn.innerHTML;
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault(); // ป้องกันการรีเฟรชหน้าจอ
+
+            // เปลี่ยนปุ่มเป็นสถานะกำลังโหลด
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> กำลังบันทึก...';
+            statusMsg.innerText = '';
+            statusMsg.className = '';
+
+            // ดึงข้อมูลจากฟอร์ม
+            const formData = new FormData(form);
+
+            // ส่งข้อมูลไปยัง Google Apps Script ด้วย fetch
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                // เมื่อได้รับคำตอบกลับมา
+                if (data === "Success") {
+                    statusMsg.innerText = "✅ บันทึกข้อมูลสำเร็จ!";
+                    statusMsg.className = "success";
+                    form.reset(); // เคลียร์ฟอร์ม
+                } else {
+                    statusMsg.innerText = "❌ เกิดข้อผิดพลาด: " + data;
+                    statusMsg.className = "error";
+                }
+            })
+            .catch(error => {
+                statusMsg.innerText = "❌ เชื่อมต่อไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต";
+                statusMsg.className = "error";
+                console.error('Error!', error.message);
+            })
+            .finally(() => {
+                // คืนค่าปุ่มกลับสู่สภาพเดิม
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            });
+        });
+    </script>
+
+</body>
+</html>
